@@ -82,9 +82,8 @@ int main(){
 	}
 
 	//write to memory and execute program
-	separateNTimes(vector,7,VECTOR_SIZE);
+	fft(vector,VECTOR_SIZE);
 
-	fftNTimes(vector,7,VECTOR_SIZE);
 
 	for (i = 0; i<VECTOR_SIZE; i++){
 		printf("%g %g\n",vector[i].real, vector[i].imaginary);

@@ -81,3 +81,58 @@ void fftNTimes(Complex* vector, unsigned times, unsigned size){
 	return;
 
 }
+
+
+
+void separate(Complex* vector, unsigned size){
+	unsigned i, halfSize = size/2;
+	Complex aux;
+	if(size == 1){
+		return;
+	}
+
+	for(i=0; i<halfSize/2; i++){
+		aux = vector[2*i+1];
+		vector[2*i+1] = vector[2*i+halfSize];
+		vector[2*i+halfSize] = aux;
+	}
+
+
+	separate(vector,halfSize);
+	separate(&vector[halfSize],halfSize);
+
+}
+
+
+void fft(Complex* vector, unsigned size){
+
+	unsigned halfSize = size/2, i;
+	if(size == 1){
+		return;
+	}
+
+	separate(vector, size);
+
+	fft(vector,halfSize);
+	fft(&vector[halfSize],halfSize);
+
+	for(i=0; i<halfSize; i++){
+		Complex Wnk, sum, sub, mul;
+
+		Wnk.real = cos(-2.*PI*(((double)i)/((double)size)));
+		Wnk.imaginary = sin(-2.*PI*(((double)i)/((double)size)));
+
+		mul = CMul(vector[halfSize+i],Wnk);
+		sum = CSum(vector[i],mul);
+		sub = CSub(vector[i],mul);
+
+
+		vector[i].real = sum.real;
+		vector[i].imaginary = sum.imaginary;
+		vector[i+halfSize].real = sub.real;
+		vector[i+halfSize].imaginary = sub.imaginary;
+	}
+
+	return;
+
+}
