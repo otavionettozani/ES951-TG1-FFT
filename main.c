@@ -3,8 +3,10 @@
 #include <string.h>
 #include <e-hal.h>
 #include "messages.h"
+#include "fft.h"
 
 #define RAM_SIZE (0x8000)
+#define VECTOR_SIZE (128)
 
 void clearFlags(){
 
@@ -61,8 +63,10 @@ int main(){
 	unsigned addr;
 	int i,j,k;
 
+	//data for fft
+	Complex vector[VECTOR_SIZE];
+
 	char filename[9] = "logs.txt";
-	unsigned message = 0x0000beef;
 	FILE* file = fopen(filename,"w");
 
 	e_init(NULL);
@@ -70,29 +74,23 @@ int main(){
 
 	clearFlags();
 
-	//write to memory and execute program
 
-	for(i=0;i<platform.rows;i++){
-		for(j=0;j<platform.cols; j++){
-			e_open(&dev,i,j,1,1);
-			e_reset_group(&dev);
-
-			e_write(&dev, 0,0, COMMADDRESS_DATA, &message, sizeof(unsigned));
-			dataSent(&dev, 0,0, 1*sizeof(message));
-			e_return_stat_t result = e_load("epiphanyProgram.srec",&dev,0,0,E_TRUE);
-
-			if(result != E_OK){
-				return EXIT_FAILURE;
-			}
-
-			e_close(&dev);
-		}
+	//initialize data
+	for (i=0; i<VECTOR_SIZE; i++){
+		vector[i].real = i+1;
+		vector[i].imaginary = 0;
 	}
 
-	usleep(20000);
+	//write to memory and execute program
+	separateNTimes(vector,7,VECTOR_SIZE);
 
+	fftNTimes(vector,7,VECTOR_SIZE);
 
+	for (i = 0; i<VECTOR_SIZE; i++){
+		printf("%g %g\n",vector[i].real, vector[i].imaginary);
+	}
 
+	return 0;
 
 	//read all memory
 	e_open(&dev, 0, 0, platform.rows, platform.cols);
