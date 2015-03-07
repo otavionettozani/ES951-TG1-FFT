@@ -26,6 +26,8 @@ int main(void){
 	while(!dataReceived[0]);
 	//acknowledge receiving the data
 	*ack = 1;
+	//reset receive data bit
+	*dataReceived = 0;
 
 
 

@@ -35,7 +35,7 @@ Complex CMul(Complex a, Complex b){
 void separateNTimes(Complex* vec, unsigned times, unsigned size){
 	unsigned i, halfSize = size/2;
 	Complex aux;
-	if(times == 0){
+	if(times == 0 || size == 1){
 		return;
 	}
 
@@ -54,7 +54,7 @@ void separateNTimes(Complex* vec, unsigned times, unsigned size){
 void fftNTimes(Complex* vector, unsigned times, unsigned size){
 
 	unsigned halfSize = size/2, i;
-	if(times == 0){
+	if(times == 0 || size == 1){
 		return;
 	}
 

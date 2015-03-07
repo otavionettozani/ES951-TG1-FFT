@@ -6,7 +6,7 @@
 #include "fft.h"
 
 #define RAM_SIZE (0x8000)
-#define VECTOR_SIZE (128)
+#define VECTOR_SIZE (65536)
 
 void clearFlags(){
 
@@ -49,6 +49,8 @@ void dataSent(void *dev, unsigned row, unsigned col, unsigned size){
 	return;
 }
 
+
+
 int main(){
 
 
@@ -63,8 +65,6 @@ int main(){
 	unsigned addr;
 	int i,j,k;
 
-	//data for fft
-	Complex vector[VECTOR_SIZE];
 
 	char filename[9] = "logs.txt";
 	FILE* file = fopen(filename,"w");
@@ -74,6 +74,19 @@ int main(){
 
 	clearFlags();
 
+//-------------------------------FFT----------------------
+
+	//data for fft
+	Complex vector[VECTOR_SIZE];
+
+	//max elements to fit in the memory of the epiphany core
+	unsigned maxElements = (0x8000 - COMMADDRESS_DATA)/sizeof(Complex);
+
+	for(i=1;maxElements!=1;maxElements>>=1){
+		i<<=1;
+	}
+	maxElements = i;
+
 
 	//initialize data
 	for (i=0; i<VECTOR_SIZE; i++){
@@ -81,16 +94,40 @@ int main(){
 		vector[i].imaginary = 0;
 	}
 
-	//write to memory and execute program
-	fft(vector,VECTOR_SIZE);
+	//number of sections that the input vector will be divided
+	unsigned sections = VECTOR_SIZE/maxElements < 16 ? (VECTOR_SIZE <16 ? VECTOR_SIZE : 16): VECTOR_SIZE/maxElements;
+	unsigned sectionSize = VECTOR_SIZE/sections;
 
+	char* processingSections;
 
-	for (i = 0; i<VECTOR_SIZE; i++){
-		printf("%g %g\n",vector[i].real, vector[i].imaginary);
+	processingSections = (char*) malloc(sections*sizeof(char));
+	for( i=0;i<sections;i++){
+		processingSections[i]=0;
 	}
+
+	// steps taken before the processing of the vector;
+	unsigned preprocessingSteps = 0;
+
+	for(i = sections; i != 1; i>>=1){
+		preprocessingSteps ++;
+	}
+
+	printf("%d = 2^%d\n",sections, preprocessingSteps);
+
+	//a partir daqui a fft em si acontece ----------------------
+
+	//pre separate
+	separateNTimes(vector, preprocessingSteps,VECTOR_SIZE);
+
+	//full fft in separated sections
+
+	//final ffts in the rest of the vector
+
 
 	return 0;
 
+
+//-------------------------DUMP MEMORY -----------------------------
 	//read all memory
 	e_open(&dev, 0, 0, platform.rows, platform.cols);
 	fprintf(file,"(ROW,COL)   ADDRESS   DATA\n");
