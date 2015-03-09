@@ -13,13 +13,17 @@ int main(void){
 	unsigned int *size;
 	unsigned char *ack;
 	unsigned char *busy;
+	unsigned char *dataSent;
 
 	//set the pointer to their variables
 	size = (int*)(COMMADDRESS_SIZE);
 	ack = (char*)(COMMADDRESS_EPIPHANY_ACK);
 	dataReceived = (char*)(COMMADDRESS_DATA_TO_EPIPHANY);
 	busy = (char*)(COMMADDRESS_BUSY);
+	dataSent = (char*)(COMMADDRESS_DATA_TO_ARM);
 
+
+	*dataSent = 0;
 	//set the core as busy
 	*busy = 1;
 	//wait for signal that all data has been transfered
@@ -34,5 +38,7 @@ int main(void){
 
 	//reset busy
 	*busy = 0;
+
+	*dataSent = 1;
 	return EXIT_SUCCESS;
 }

@@ -31,7 +31,7 @@ void dataSent(void *dev, unsigned row, unsigned col, unsigned size){
 
 	unsigned sizePointer[1];
 	unsigned char bitOn[1];
-	unsigned char *ack;
+	unsigned char ack[1];
 
 	sizePointer[0] = size;
 	bitOn[0] = 1;
@@ -42,6 +42,7 @@ void dataSent(void *dev, unsigned row, unsigned col, unsigned size){
 	e_write(dev, row, col,COMMADDRESS_DATA_TO_EPIPHANY,bitOn,sizeof(char));
 
 	//wait for the core to acknowledge the receiving of the data
+
 	while (!ack[0]){
 		e_read(dev,row,col,COMMADDRESS_EPIPHANY_ACK,ack,sizeof(char));
 	}
@@ -90,7 +91,7 @@ int main(){
 
 	//initialize data
 	for (i=0; i<VECTOR_SIZE; i++){
-		vector[i].real = i+1;
+		vector[i].real = 1;
 		vector[i].imaginary = 0;
 	}
 
@@ -112,20 +113,52 @@ int main(){
 		preprocessingSteps ++;
 	}
 
-	printf("%d = 2^%d\n",sections, preprocessingSteps);
-
 	//a partir daqui a fft em si acontece ----------------------
 
 	//pre separate
 	separateNTimes(vector, preprocessingSteps,VECTOR_SIZE);
 
+
 	//full fft in separated sections
+	int row = 0, col = 0;
+	char busyRead[1];
+	i = 0;
+	while(1){
+		e_open(&dev, row,col,1,1);
+
+		e_read(&dev,0,0,COMMADDRESS_BUSY,&busyRead,sizeof(char));
+
+		if(!busyRead[0]){
+
+			e_load("epiphanyProgram.srec",&dev,0,0,E_TRUE);
+			e_write(&dev,0,0,COMMADDRESS_DATA,&vector[i*sectionSize],sectionSize*sizeof(Complex));
+			i++;
+			dataSent(&dev,0,0,sectionSize*sizeof(Complex));
+		}else{
+			e_read(&dev,0,0,COMMADDRESS_DATA_TO_ARM,&busyRead,sizeof(char));
+
+		}
+
+
+
+
+
+
+		//go to next core
+		row ++;
+		col = (row = row%4) ? col : col+1;
+
+		if(col == 4){
+			col = row = 0;
+			break;
+		}
+		col = col%4;
+	}
 
 	//final ffts in the rest of the vector
 
 
-	return 0;
-
+	//return 0;
 
 //-------------------------DUMP MEMORY -----------------------------
 	//read all memory
