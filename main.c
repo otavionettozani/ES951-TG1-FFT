@@ -31,10 +31,12 @@ void dataSent(void *dev, unsigned row, unsigned col, unsigned size){
 
 	unsigned sizePointer[1];
 	unsigned char bitOn[1];
+	unsigned char bitOff[1];
 	unsigned char ack[1];
 
 	sizePointer[0] = size;
 	bitOn[0] = 1;
+	bitOff[0] = 0;
 
 	//send to the core the size of the message sent
 	e_write(dev, row, col, COMMADDRESS_SIZE, sizePointer, sizeof(unsigned));
@@ -122,20 +124,42 @@ int main(){
 	//full fft in separated sections
 	int row = 0, col = 0;
 	char busyRead[1];
+	char dataToArm[1];
+	char armAck[1] = {1};
+	char coresOrganization[4][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+	int bufferSize[1]={sectionSize};
 	i = 0;
+	j=0;
 	while(1){
 		e_open(&dev, row,col,1,1);
 
 		e_read(&dev,0,0,COMMADDRESS_BUSY,&busyRead,sizeof(char));
 
+		printf("%d,%d, busy = %d\n",row,col,busyRead[0]);
 		if(!busyRead[0]){
 
 			e_load("epiphanyProgram.srec",&dev,0,0,E_TRUE);
 			e_write(&dev,0,0,COMMADDRESS_DATA,&vector[i*sectionSize],sectionSize*sizeof(Complex));
+			coresOrganization[row][col] = i;
 			i++;
 			dataSent(&dev,0,0,sectionSize*sizeof(Complex));
+
 		}else{
-			e_read(&dev,0,0,COMMADDRESS_DATA_TO_ARM,&busyRead,sizeof(char));
+			int position = coresOrganization[row][col];
+			e_read(&dev,0,0,COMMADDRESS_DATA_TO_ARM,&dataToArm,sizeof(char));
+
+			printf("%d, %d, dataToArm = %d\n",row,col,dataToArm[0]);
+			if(dataToArm[0]){
+				e_read(&dev,0,0,COMMADDRESS_DATA,&vector[position*sectionSize],sectionSize*sizeof(Complex));
+				e_write(&dev,0,0,COMMADDRESS_ARM_ACK,&armAck[0],sizeof(char));
+				processingSections[position]=1;
+
+				j++;
+
+				printf("%d\n",j==sections);
+				if(j==17)
+					break;
+			}
 
 		}
 
@@ -150,11 +174,15 @@ int main(){
 
 		if(col == 4){
 			col = row = 0;
-			break;
+			//break;
 		}
 		col = col%4;
 	}
 
+
+	for(i=0;i<sections;i++){
+		printf("%d ",processingSections[i]);
+	}
 	//final ffts in the rest of the vector
 
 

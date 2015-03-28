@@ -1,8 +1,8 @@
 #define PI (3.141592653589793)
 
 typedef struct{
-	double real;
-	double imaginary;
+	float real;
+	float imaginary;
 } Complex;
 
 //complex functions

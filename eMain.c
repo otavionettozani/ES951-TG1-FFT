@@ -6,6 +6,8 @@
 
 #include "messages.h"
 
+#include "fft.h"
+
 int main(void){
 
 
@@ -14,6 +16,8 @@ int main(void){
 	unsigned char *ack;
 	unsigned char *busy;
 	unsigned char *dataSent;
+	unsigned char *armAck;
+	Complex* data;
 
 	//set the pointer to their variables
 	size = (int*)(COMMADDRESS_SIZE);
@@ -21,7 +25,8 @@ int main(void){
 	dataReceived = (char*)(COMMADDRESS_DATA_TO_EPIPHANY);
 	busy = (char*)(COMMADDRESS_BUSY);
 	dataSent = (char*)(COMMADDRESS_DATA_TO_ARM);
-
+	armAck = (char*)(COMMADDRESS_ARM_ACK);
+	data = (Complex*)(COMMADDRESS_DATA);
 
 	*dataSent = 0;
 	//set the core as busy
@@ -33,12 +38,23 @@ int main(void){
 	//reset receive data bit
 	*dataReceived = 0;
 
+//--------------
+//do all that matters
+	int i=0;
+	for(i=0; i<2048;i++){
+		data[i].real = 2;
+	}
 
+//----------------
+	//up data sent flag
+	*dataSent = 1;
+	//down own ack
+	*ack = 0;
+	//wait for arm to ack
+	while(!armAck[0]);
 
-
-	//reset busy
+	//reset busy flag
 	*busy = 0;
 
-	*dataSent = 1;
 	return EXIT_SUCCESS;
 }
