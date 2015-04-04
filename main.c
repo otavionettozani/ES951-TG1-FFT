@@ -6,7 +6,7 @@
 #include "fft.h"
 
 #define RAM_SIZE (0x8000)
-#define VECTOR_SIZE (65536)
+#define VECTOR_SIZE (256)
 
 void clearFlags(){
 
@@ -44,7 +44,6 @@ void dataSent(void *dev, unsigned row, unsigned col, unsigned size){
 	e_write(dev, row, col,COMMADDRESS_DATA_TO_EPIPHANY,bitOn,sizeof(char));
 
 	//wait for the core to acknowledge the receiving of the data
-
 	while (!ack[0]){
 		e_read(dev,row,col,COMMADDRESS_EPIPHANY_ACK,ack,sizeof(char));
 	}
@@ -117,7 +116,7 @@ int main(){
 
 	//a partir daqui a fft em si acontece ----------------------
 
-	//pre separate
+	//PRE SEPARATE ----- Separa-se o vetor de modo a cada parte da fft que sera feita possa caber nos cores;
 	separateNTimes(vector, preprocessingSteps,VECTOR_SIZE);
 
 
@@ -131,11 +130,15 @@ int main(){
 	i = 0;
 	j=0;
 	while(1){
+
+	//open the cores
 		e_open(&dev, row,col,1,1);
 
 		e_read(&dev,0,0,COMMADDRESS_BUSY,&busyRead,sizeof(char));
 
-		printf("%d,%d, busy = %d\n",row,col,busyRead[0]);
+
+	//if the core is free, load the program and write to the memory the data
+	printf("core %d, %d = %d\n",row, col, busyRead[0]);
 		if(!busyRead[0]){
 
 			e_load("epiphanyProgram.srec",&dev,0,0,E_TRUE);
@@ -145,45 +148,62 @@ int main(){
 			dataSent(&dev,0,0,sectionSize*sizeof(Complex));
 
 		}else{
+	// if the cores are not free, check if they have data to pass on
 			int position = coresOrganization[row][col];
 			e_read(&dev,0,0,COMMADDRESS_DATA_TO_ARM,&dataToArm,sizeof(char));
 
-			printf("%d, %d, dataToArm = %d\n",row,col,dataToArm[0]);
 			if(dataToArm[0]){
 				e_read(&dev,0,0,COMMADDRESS_DATA,&vector[position*sectionSize],sectionSize*sizeof(Complex));
 				e_write(&dev,0,0,COMMADDRESS_ARM_ACK,&armAck[0],sizeof(char));
 				processingSections[position]=1;
 
 				j++;
+				e_reset_group(&dev);
 
-				printf("%d\n",j==sections);
-				if(j==17)
+				int counter;
+				char hasEnded = 1;
+				for(counter=0; counter<sections;counter++){
+					if(processingSections[counter]==0){
+						hasEnded = 0;
+						break;
+					}
+				}
+
+				if(hasEnded){
 					break;
+				}
+
 			}
 
 		}
 
-
-
-
-
-
 		//go to next core
+
+		e_close(&dev);
 		row ++;
 		col = (row = row%4) ? col : col+1;
 
 		if(col == 4){
 			col = row = 0;
-			//break;
+
 		}
 		col = col%4;
 	}
 
 
-	for(i=0;i<sections;i++){
-		printf("%d ",processingSections[i]);
+
+	//final multicore junctions in the rest of the vector
+
+
+	//final singlecore junctions in the rest of the vector
+
+
+
+	//print the result
+	fprintf(file,"results:\n");
+	for(i=0; i<VECTOR_SIZE;i++){
+		fprintf(file,"(%g, %g)\n",vector[i].real,vector[i].imaginary);
 	}
-	//final ffts in the rest of the vector
 
 
 	//return 0;

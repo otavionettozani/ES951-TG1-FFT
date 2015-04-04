@@ -85,13 +85,13 @@ void fftNTimes(Complex* vector, unsigned times, unsigned size){
 
 
 void separate(Complex* vector, unsigned size){
-	unsigned i, halfSize = size/2;
+	unsigned i, halfSize = size/2, quarterSize = halfSize/2;
 	Complex aux;
 	if(size == 1){
 		return;
 	}
 
-	for(i=0; i<halfSize/2; i++){
+	for(i=0; i<quarterSize; i++){
 		aux = vector[2*i+1];
 		vector[2*i+1] = vector[2*i+halfSize];
 		vector[2*i+halfSize] = aux;
@@ -107,11 +107,13 @@ void separate(Complex* vector, unsigned size){
 void fft(Complex* vector, unsigned size){
 
 	unsigned halfSize = size/2, i;
+
+
 	if(size == 1){
 		return;
 	}
 
-	separate(vector, size);
+	//separate(vector, size);
 
 	fft(vector,halfSize);
 	fft(&vector[halfSize],halfSize);
@@ -119,12 +121,22 @@ void fft(Complex* vector, unsigned size){
 	for(i=0; i<halfSize; i++){
 		Complex Wnk, sum, sub, mul;
 
-		Wnk.real = cos(-2.*PI*(((double)i)/((double)size)));
-		Wnk.imaginary = sin(-2.*PI*(((double)i)/((double)size)));
+		float theta = ((float)i)/((float)size);
+		Wnk.real = cos(-2.*PI*theta);
+		Wnk.imaginary = sin(-2.*PI*theta);
 
-		mul = CMul(vector[halfSize+i],Wnk);
-		sum = CSum(vector[i],mul);
-		sub = CSub(vector[i],mul);
+
+		mul.real = vector[halfSize+i].real*Wnk.real-vector[halfSize+i].imaginary*Wnk.imaginary;
+		mul.imaginary = vector[halfSize+i].real*Wnk.imaginary-vector[halfSize+i].imaginary*Wnk.real;
+		//mul = CMul(vector[halfSize+i],Wnk);
+
+		sum.real = vector[i].real+mul.real;
+		sum.imaginary=vector[i].imaginary+mul.imaginary;
+		//sum = CSum(vector[i],mul);
+
+		sub.real = vector[i].real-mul.real;
+		sub.imaginary=vector[i].imaginary-mul.imaginary;
+		//sub = CSub(vector[i],mul);
 
 
 		vector[i].real = sum.real;

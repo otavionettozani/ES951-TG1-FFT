@@ -28,6 +28,7 @@ int main(void){
 	armAck = (char*)(COMMADDRESS_ARM_ACK);
 	data = (Complex*)(COMMADDRESS_DATA);
 
+
 	*dataSent = 0;
 	//set the core as busy
 	*busy = 1;
@@ -40,21 +41,25 @@ int main(void){
 
 //--------------
 //do all that matters
-	int i=0;
-	for(i=0; i<2048;i++){
-		data[i].real = 2;
-	}
+	unsigned quantity = size[0]/sizeof(Complex);
+	fft(&data[0],quantity);
+
 
 //----------------
 	//up data sent flag
 	*dataSent = 1;
 	//down own ack
-	*ack = 0;
+
 	//wait for arm to ack
 	while(!armAck[0]);
 
+	*ack = 0;
+
 	//reset busy flag
 	*busy = 0;
+
+	*armAck = 0;
+
 
 	return EXIT_SUCCESS;
 }
