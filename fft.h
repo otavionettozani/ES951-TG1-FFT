@@ -25,4 +25,4 @@ void fftNTimes(Complex* vector, unsigned times, unsigned size);
 void separate(Complex* vector, unsigned size);
 
 //a full fft algorithm
-void fft(Complex* vector, unsigned size);
+void e_fft(Complex* vector, unsigned size);

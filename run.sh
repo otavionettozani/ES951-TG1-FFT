@@ -12,5 +12,6 @@ if [ -f logs.txt ]; then
 	sudo rm logs.txt
 fi
 
+e-reset
 sudo -E LD_LIBRARY_PATH=${ELIBS} EPIPHANY_HDF=${EHDF} ./armProgram.elf
 

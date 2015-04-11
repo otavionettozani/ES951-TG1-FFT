@@ -42,10 +42,12 @@ int main(void){
 //--------------
 //do all that matters
 	unsigned quantity = size[0]/sizeof(Complex);
-	fft(&data[0],quantity);
-
+	//fft(data,quantity);
+	e_fft(data,quantity);
 
 //----------------
+
+
 	//up data sent flag
 	*dataSent = 1;
 	//down own ack

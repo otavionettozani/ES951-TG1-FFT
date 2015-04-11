@@ -32,6 +32,7 @@ Complex CMul(Complex a, Complex b){
 }
 
 
+
 void separateNTimes(Complex* vec, unsigned times, unsigned size){
 	unsigned i, halfSize = size/2;
 	Complex aux;
@@ -92,9 +93,12 @@ void separate(Complex* vector, unsigned size){
 	}
 
 	for(i=0; i<quarterSize; i++){
-		aux = vector[2*i+1];
-		vector[2*i+1] = vector[2*i+halfSize];
-		vector[2*i+halfSize] = aux;
+		aux.real = vector[2*i+1].real;
+		aux.imaginary = vector[2*i+1].imaginary;
+		vector[2*i+1].real = vector[2*i+halfSize].real;
+		vector[2*i+1].imaginary = vector[2*i+halfSize].imaginary;
+		vector[2*i+halfSize].real = aux.real;
+		vector[2*i+halfSize].imaginary = aux.imaginary;
 	}
 
 
@@ -104,39 +108,94 @@ void separate(Complex* vector, unsigned size){
 }
 
 
-void fft(Complex* vector, unsigned size){
+void e_fft(Complex* vector, unsigned size){
 
 	unsigned halfSize = size/2, i;
-
 
 	if(size == 1){
 		return;
 	}
 
-	//separate(vector, size);
+	separate(vector, size);
 
-	fft(vector,halfSize);
-	fft(&vector[halfSize],halfSize);
+	e_fft(vector,halfSize);
+	e_fft(&vector[halfSize],halfSize);
 
 	for(i=0; i<halfSize; i++){
 		Complex Wnk, sum, sub, mul;
 
-		float theta = ((float)i)/((float)size);
-		Wnk.real = cos(-2.*PI*theta);
-		Wnk.imaginary = sin(-2.*PI*theta);
+
+		float divisor;
+		switch(size){
+			case 2:
+				divisor = -6.2831/2.;
+			break;
+			case 4:
+				divisor = -6.2831/4.;
+			break;
+			case 8:
+				divisor = -6.2831/8.;
+			break;
+			case 16:
+				divisor = -6.2831/16.;
+			break;
+			case 32:
+				divisor = -6.2831/32.;
+			break;
+			case 64:
+				divisor = -6.2831/64.;
+			break;
+			case 128:
+				divisor = -6.2831/128.;
+			break;
+			case 256:
+				divisor = -6.2831/256.;
+			break;
+			case 512:
+				divisor = -6.2831/512.;
+			break;
+			case 1024:
+				divisor = -6.2831/1024.;
+			break;
+			case 2048:
+				divisor = -6.2831/2048.;
+			break;
+		}
+
+		float fi = i;
+		float theta = fi*divisor;
+		float theta2 = theta*theta;
+		float theta3 = theta2*theta;
+		float theta4 = theta3*theta;
+
+		float den2 = -0.5;
+		float den3 = -0.1666;
+		float den4 = 0.0416;
+
+		theta2 = theta2*den2;
+		theta3 = theta3*den3;
+		theta4 = theta4*den4;
+
+		//float s = theta+theta3;
+		//float c = 1+theta2+theta4;
+		//Wnk.real = cos(-2.*PI*theta);
+		//Wnk.imaginary = sin(-2.*PI*theta);
+
+		Wnk.real = 1;
+		Wnk.imaginary = 0;
 
 
 		mul.real = vector[halfSize+i].real*Wnk.real-vector[halfSize+i].imaginary*Wnk.imaginary;
 		mul.imaginary = vector[halfSize+i].real*Wnk.imaginary-vector[halfSize+i].imaginary*Wnk.real;
-		//mul = CMul(vector[halfSize+i],Wnk);
+
 
 		sum.real = vector[i].real+mul.real;
 		sum.imaginary=vector[i].imaginary+mul.imaginary;
-		//sum = CSum(vector[i],mul);
+
 
 		sub.real = vector[i].real-mul.real;
 		sub.imaginary=vector[i].imaginary-mul.imaginary;
-		//sub = CSub(vector[i],mul);
+
 
 
 		vector[i].real = sum.real;

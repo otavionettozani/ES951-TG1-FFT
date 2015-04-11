@@ -6,7 +6,7 @@
 #include "fft.h"
 
 #define RAM_SIZE (0x8000)
-#define VECTOR_SIZE (256)
+#define VECTOR_SIZE (262144)
 
 void clearFlags(){
 
@@ -24,6 +24,30 @@ void clearFlags(){
 		}
 	}
 	usleep(10000);
+
+}
+
+void dumpMemory(void* dev, unsigned row, unsigned col){
+
+	printf("adsasdadads");
+	unsigned read_buffer[RAM_SIZE/4], k;
+	unsigned read_data;
+	unsigned addr;
+	char filename[9] = "logs2.txt";
+	FILE* file = fopen(filename,"w");
+
+	fprintf(file,"(ROW,COL)   ADDRESS   DATA\n");
+	fprintf(file,"-----------------------------\n");
+
+	for(k=0;k<RAM_SIZE/4;k++){
+		addr=4*k;
+		e_read(&dev, row, col, addr, &read_data, sizeof(int));
+		read_buffer[k]=read_data;
+	}
+	for(k=0;k<RAM_SIZE/4;k++){
+		fprintf(file,"(%2d,%2d)     0x%08x   0x%08x\n",row,col,k*4,read_buffer[k]);
+	}
+
 
 }
 
@@ -47,7 +71,6 @@ void dataSent(void *dev, unsigned row, unsigned col, unsigned size){
 	while (!ack[0]){
 		e_read(dev,row,col,COMMADDRESS_EPIPHANY_ACK,ack,sizeof(char));
 	}
-
 	return;
 }
 
@@ -92,7 +115,7 @@ int main(){
 
 	//initialize data
 	for (i=0; i<VECTOR_SIZE; i++){
-		vector[i].real = 1;
+		vector[i].real = i;
 		vector[i].imaginary = 0;
 	}
 
