@@ -3,11 +3,12 @@
 #include <string.h>
 #include <e-hal.h>
 #include <math.h>
+#include <sys/time.h>
 #include "messages.h"
 #include "fft.h"
 
 #define RAM_SIZE (0x8000)
-#define VECTOR_SIZE (262144)
+#define VECTOR_SIZE (524288)
 
 void clearFlags(){
 
@@ -95,6 +96,9 @@ int main(){
 	char filename[9] = "logs.txt";
 	FILE* file = fopen(filename,"w");
 
+	struct timeval initTime, endTime;
+	long int timediff;
+
 	e_init(NULL);
 	e_get_platform_info(&platform);
 
@@ -139,6 +143,8 @@ int main(){
 	}
 
 	//a partir daqui a fft em si acontece ----------------------
+	gettimeofday(&initTime,NULL);
+	timediff = initTime.tv_sec*1000000+initTime.tv_usec;
 
 	//PRE SEPARATE ----- Separa-se o vetor de modo a cada parte da fft que sera feita possa caber nos cores;
 	separateNTimes(vector, preprocessingSteps,VECTOR_SIZE);
@@ -162,7 +168,7 @@ int main(){
 
 
 	//if the core is free, load the program and write to the memory the data
-	printf("core %d, %d = %d\n",row, col, busyRead[0]);
+	//printf("core %d, %d = %d\n",row, col, busyRead[0]);
 		if(!busyRead[0]){
 
 			e_load("epiphanyProgram.srec",&dev,0,0,E_TRUE);
@@ -223,10 +229,20 @@ int main(){
 	fftNTimes(vector,preprocessingSteps,VECTOR_SIZE);
 
 
+//-------------FFT ended
+
+	gettimeofday(&endTime,NULL);
+    timediff = endTime.tv_sec*1000000+endTime.tv_usec-timediff;
+	double timeInSeconds = timediff;
+	timeInSeconds/=1000000.;
+    printf("%g\n",timeInSeconds);
+
+
+	return 0;
 	//print the result
 	fprintf(file,"results:\n");
 	for(i=0; i<VECTOR_SIZE;i++){
-		fprintf(file,"(%g, %g)\n",vector[i].real/VECTOR_SIZE,vector[i].imaginary/VECTOR_SIZE);
+		fprintf(file,"(%g, %g)\n",vector[i].real,vector[i].imaginary);
 	}
 
 
