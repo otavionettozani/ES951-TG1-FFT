@@ -124,7 +124,7 @@ void e_fft(Complex* vector, unsigned size){
 	for(i=0; i<halfSize; i++){
 		Complex Wnk, sum, sub, mul;
 
-
+		//taylor for sin and cos
 		float divisor;
 		switch(size){
 			case 2:
@@ -167,26 +167,37 @@ void e_fft(Complex* vector, unsigned size){
 		float theta2 = theta*theta;
 		float theta3 = theta2*theta;
 		float theta4 = theta3*theta;
+		float theta5 = theta4*theta;
+		float theta6 = theta5*theta;
+		float theta8 = theta6*theta2;
 
 		float den2 = -0.5;
-		float den3 = -0.1666;
-		float den4 = 0.0416;
+		float den3 = -0.166666;
+		float den4 = 0.041666;
+		float den5 = 0.008333;
+		float den6 = -0.001388;
+		float den8 = 0.000024;
 
 		theta2 = theta2*den2;
 		theta3 = theta3*den3;
 		theta4 = theta4*den4;
+		theta5 = theta5*den5;
+		theta6 = theta6*den6;
+		theta8 = theta8*den8;
 
-		//float s = theta+theta3;
-		//float c = 1+theta2+theta4;
+		float s = theta+theta3+theta5;
+		float c = 1+theta2+theta4+theta6+theta8;
+
 		//Wnk.real = cos(-2.*PI*theta);
 		//Wnk.imaginary = sin(-2.*PI*theta);
 
-		Wnk.real = 1;
-		Wnk.imaginary = 0;
+		Wnk.real = c;
+		Wnk.imaginary = s;
+		//taylor ended here
 
 
 		mul.real = vector[halfSize+i].real*Wnk.real-vector[halfSize+i].imaginary*Wnk.imaginary;
-		mul.imaginary = vector[halfSize+i].real*Wnk.imaginary-vector[halfSize+i].imaginary*Wnk.real;
+		mul.imaginary = vector[halfSize+i].real*Wnk.imaginary+vector[halfSize+i].imaginary*Wnk.real;
 
 
 		sum.real = vector[i].real+mul.real;

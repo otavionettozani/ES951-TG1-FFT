@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <e-hal.h>
+#include <math.h>
 #include "messages.h"
 #include "fft.h"
 
@@ -115,8 +116,8 @@ int main(){
 
 	//initialize data
 	for (i=0; i<VECTOR_SIZE; i++){
-		vector[i].real = i;
-		vector[i].imaginary = 0;
+		vector[i].real = 1;
+		vector[i].imaginary = 1;
 	}
 
 	//number of sections that the input vector will be divided
@@ -219,13 +220,13 @@ int main(){
 
 
 	//final singlecore junctions in the rest of the vector
-
+	fftNTimes(vector,preprocessingSteps,VECTOR_SIZE);
 
 
 	//print the result
 	fprintf(file,"results:\n");
 	for(i=0; i<VECTOR_SIZE;i++){
-		fprintf(file,"(%g, %g)\n",vector[i].real,vector[i].imaginary);
+		fprintf(file,"(%g, %g)\n",vector[i].real/VECTOR_SIZE,vector[i].imaginary/VECTOR_SIZE);
 	}
 
 
